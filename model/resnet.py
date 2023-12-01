@@ -16,14 +16,16 @@ class ResidualBlock(nn.Module):
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(
-            out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
+            out_channels, out_channels, kernel_size=3, stride=1, padding=1,
+            bias=False
         )
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(
-                    in_channels, out_channels, kernel_size=1, stride=stride, bias=False
+                    in_channels, out_channels, kernel_size=1, stride=stride,
+                    bias=False
                 ),
                 nn.BatchNorm2d(out_channels),
             )
@@ -41,7 +43,8 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         num_blocks = [2, 2, 2]
         self.in_channels = 16
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3,
+                               stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.layer1 = self.make_layer(16, num_blocks[0], stride=1)
         self.layer2 = self.make_layer(32, num_blocks[1], stride=2)
@@ -52,7 +55,8 @@ class ResNet(nn.Module):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
-            layers.append(ResidualBlock(self.in_channels, out_channels, stride))
+            layers.append(ResidualBlock(
+                self.in_channels, out_channels, stride))
             self.in_channels = out_channels
         return nn.Sequential(*layers)
 

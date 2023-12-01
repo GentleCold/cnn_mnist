@@ -15,7 +15,8 @@ def depthwise_separable_conv(in_channels, out_channels, stride):
         nn.BatchNorm2d(in_channels),
         nn.ReLU6(inplace=True),
         nn.Conv2d(
-            in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=False
+            in_channels, out_channels, kernel_size=1, stride=1, padding=0,
+            bias=False
         ),
         nn.BatchNorm2d(out_channels),
         nn.ReLU6(inplace=True),
