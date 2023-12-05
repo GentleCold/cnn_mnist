@@ -1,2 +1,4 @@
 MNIST/
 __pycache__/
+
+*.pdf

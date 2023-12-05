@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from model.lenet import LeNet
 from model.alexnet import AlexNet
+from model.alexnet import AlexNetLarge
 from model.resnet import ResNet
 from model.mobilenet import MobileNet
 from model.googlenet import GoogleNet
@@ -106,6 +107,8 @@ class Model:
             self.model = LeNet().to(DEVICE)
         elif self.model_type == "alexnet":
             self.model = AlexNet(self.dropout_rate).to(DEVICE)
+        elif self.model_type == "alexnetlarge":
+            self.model = AlexNetLarge(self.dropout_rate).to(DEVICE)
         elif self.model_type == "resnet":
             self.model = ResNet().to(DEVICE)
         elif self.model_type == "mobilenet":

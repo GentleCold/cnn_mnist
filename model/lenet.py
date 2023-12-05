@@ -6,17 +6,12 @@ import torch.nn.functional as F
 class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
-        # 激活函数
-        self.active = nn.ReLU()
-        # 第一个卷积层，1 -> 6, 卷积核大小5 * 5
+        self.active = nn.Sigmoid()
         self.conv1 = nn.Conv2d(1, 6, 5)
-        # 第一个池化层，窗口大小2 * 2
         self.maxpool1 = nn.MaxPool2d(2, 2)
-        # 第二个卷积层，6 -> 16, 5 * 5
         self.conv2 = nn.Conv2d(6, 16, 5)
-        # 第二个池化层，2 * 2
         self.maxpool2 = nn.MaxPool2d(2, 2)
-        # 全连接层
+
         self.fc1 = nn.Linear(16 * 4 * 4, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
