@@ -53,33 +53,33 @@ class AlexNet(nn.Module):
         self.features = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='bilinear'),
 
-            nn.Conv2d(1, 24, kernel_size=5, padding=2),  # 56
+            nn.Conv2d(1, 48, kernel_size=5, padding=2),  # 56
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2),  # 28
 
-            nn.Conv2d(24, 64, kernel_size=5, padding=2),  # 28
+            nn.Conv2d(48, 128, kernel_size=5, padding=2),  # 28
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2),  # 14
 
-            nn.Conv2d(64, 96, kernel_size=3, padding=1),
+            nn.Conv2d(128, 192, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
 
-            nn.Conv2d(96, 96, kernel_size=3, padding=1),
+            nn.Conv2d(192, 192, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
 
-            nn.Conv2d(96, 64, kernel_size=3, padding=1),
+            nn.Conv2d(192, 128, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2)  # 7
         )
 
         self.classifier = nn.Sequential(
             nn.Dropout(dropout_rate),
-            nn.Linear(64 * 7 * 7, 512),
+            nn.Linear(128 * 7 * 7, 4096),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout_rate),
-            nn.Linear(512, 512),
+            nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(512, 10),
+            nn.Linear(4096, 10),
         )
 
     def forward(self, x):

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class InceptionModule(nn.Module):
@@ -37,9 +38,11 @@ class InceptionModule(nn.Module):
 
 
 class GoogleNet(nn.Module):
-    def __init__(self):
+    def __init__(self, dropout_rate):
         super(GoogleNet, self).__init__()
         self.conv1 = nn.Sequential(
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+
             nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -51,36 +54,30 @@ class GoogleNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
-        self.inception3a = InceptionModule(192, 64, 96, 128, 16, 32, 32)
-        self.inception3b = InceptionModule(256, 128, 128, 192, 32, 96, 64)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.inception4a = InceptionModule(480, 192, 96, 208, 16, 48, 64)
-        self.inception4b = InceptionModule(512, 160, 112, 224, 24, 64, 64)
-        self.inception4c = InceptionModule(512, 128, 128, 256, 24, 64, 64)
-        self.inception4d = InceptionModule(512, 112, 144, 288, 32, 64, 64)
-        self.inception4e = InceptionModule(528, 256, 160, 320, 32, 128, 128)
-        self.inception5a = InceptionModule(832, 256, 160, 320, 32, 128, 128)
-        self.inception5b = InceptionModule(832, 384, 192, 384, 48, 128, 128)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.dropout = nn.Dropout(0.4)
-        self.fc = nn.Linear(1024, 10)
+        self.conv3 = nn.Sequential(
+            InceptionModule(192, 64, 96, 128, 16, 32, 32),
+            InceptionModule(256, 128, 128, 192, 32, 96, 64),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            InceptionModule(480, 192, 96, 208, 16, 48, 64),
+            InceptionModule(512, 160, 112, 224, 24, 64, 64),
+            InceptionModule(512, 128, 128, 256, 24, 64, 64),
+            InceptionModule(512, 112, 144, 288, 32, 64, 64),
+            InceptionModule(528, 256, 160, 320, 32, 128, 128),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            InceptionModule(832, 256, 160, 320, 32, 128, 128),
+            InceptionModule(832, 384, 192, 384, 48, 128, 128),
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Dropout(dropout_rate)  # 原始论文为0.4
+        )
+        self.classifier = nn.Linear(1024, 10)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
-        x = self.inception3a(x)
-        x = self.inception3b(x)
-        x = self.maxpool(x)
-        x = self.inception4a(x)
-        x = self.inception4b(x)
-        x = self.inception4c(x)
-        x = self.inception4d(x)
-        x = self.inception4e(x)
-        x = self.maxpool(x)
-        x = self.inception5a(x)
-        x = self.inception5b(x)
-        x = self.avgpool(x)
-        x = self.dropout(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
+        x = self.conv3(x)
+
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+
+        output = F.log_softmax(x, dim=1)  # log(softmax(x))
+        return output

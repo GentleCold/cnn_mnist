@@ -6,6 +6,7 @@ import torch.nn.functional as F
 class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
+        # self.resize = nn.Upsample(scale_factor=2, mode='bilinear')
         self.active = nn.Sigmoid()
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.maxpool1 = nn.MaxPool2d(2, 2)
@@ -17,6 +18,7 @@ class LeNet(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
+        # x = self.resize(x)
         x = self.active(self.conv1(x))
         x = self.maxpool1(x)
         x = self.active(self.conv2(x))

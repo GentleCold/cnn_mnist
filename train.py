@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
 
 from torchsummary import summary
 from matplotlib import pyplot as plt
@@ -56,6 +57,7 @@ class Model:
 
         self.train_accuracy = []
         self.val_accuracy = []
+        self.test_result = None
 
         self.model: nn.Module
 
@@ -78,7 +80,7 @@ class Model:
         print("Device:", DEVICE)
         print(f"Model: {self.model_type}")
         print(f"Model Info:\n")
-        summary(self.model)
+        summary(self.model, (1, 28, 28))
         print("\n==== Starting Train ====")
 
         for epoch in range(1, self.eopchs + 1):
@@ -87,16 +89,24 @@ class Model:
 
         self._eval_model(self.data.test_loader)
 
+        # 平滑损失曲线
+        def moving_average(data, window_size):
+            weights = np.repeat(1.0, window_size) / window_size
+            smoothed_data = np.convolve(data, weights, 'valid')
+            return smoothed_data
+
+        window_size = 10
+        self.train_loss = moving_average(self.train_loss, window_size)
+
     def draw_plt(self):
         plt.subplot(2, 1, 1)
-        plt.plot(self.train_loss, label="Train Loss")
-        plt.plot(self.val_loss, label="Test Loss")
+        plt.plot(self.train_loss, label="Smoothed train Loss")
         plt.title("Loss")
         plt.legend()
 
         plt.subplot(2, 1, 2)
         plt.plot(self.train_accuracy, label="Train Accuracy")
-        plt.plot(self.val_accuracy, label="Test Accuracy")
+        plt.plot(self.val_accuracy, label="Val Accuracy")
         plt.title("Accuracy")
         plt.legend()
 
@@ -110,11 +120,11 @@ class Model:
         elif self.model_type == "alexnetlarge":
             self.model = AlexNetLarge(self.dropout_rate).to(DEVICE)
         elif self.model_type == "resnet":
-            self.model = ResNet().to(DEVICE)
+            self.model = ResNet(self.dropout_rate).to(DEVICE)
         elif self.model_type == "mobilenet":
-            self.model = MobileNet().to(DEVICE)
+            self.model = MobileNet(self.dropout_rate).to(DEVICE)
         elif self.model_type == "googlenet":
-            self.model = GoogleNet().to(DEVICE)
+            self.model = GoogleNet(self.dropout_rate).to(DEVICE)
 
     def _one_epoch_train(self, epoch):
         self.model.train()
@@ -131,6 +141,8 @@ class Model:
             # 交叉熵损失函数
             loss_func = F.cross_entropy(outputs, labels)
             loss += loss_func.item()
+
+            self.train_loss.append(loss_func.item())
 
             # 获取最大概率的预测结果
             predict = outputs.argmax(dim=1)
@@ -153,7 +165,6 @@ class Model:
                 100 * accuracy)
         )
 
-        self.train_loss.append(loss)
         self.train_accuracy.append(accuracy)
 
     def _eval_model(self, target):
@@ -168,6 +179,7 @@ class Model:
                 output = self.model(data)
 
                 loss += F.cross_entropy(output, label).item()
+
                 predict = output.argmax(dim=1)
                 correct += (predict == label).sum().item()
 
@@ -180,10 +192,11 @@ class Model:
                 loss, correct, len(target.dataset),
                 100 * accuracy
             ))
+            self.test_result = accuracy
         else:
             print("Val set: \nLoss: {}, Accuracy: {}/{}({} %)\n".format(
                 loss, correct, len(target.dataset),
                 100 * accuracy
             ))
-            self.val_loss.append(loss)
+
             self.val_accuracy.append(accuracy)
